@@ -22,4 +22,4 @@ Work in progress — bachelor's thesis project, SAE Institute Zürich.
 
 ## Author
 
-Yannic [Nachname]
+Yannic Sutter
