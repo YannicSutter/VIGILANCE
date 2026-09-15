@@ -1,69 +1,78 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
+
 
 public class GameManager : MonoBehaviour
 {
     // SERIALIZED FIELDS
     [SerializeField] private GameObject playerPrefab;
+    [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private GameObject npcPrefab;
-    [SerializeField] private GameObject spawnPosition1;
-    [SerializeField] private GameObject spawnPosition2;
     [SerializeField] private InputHandler inputHandler;
 
     // VARIABLES
-    private enum Modes
-    {
-        SinglePlayer,
-        MultiPlayer
-    }
-    private Modes PlayMode;
-
-    private GameState gameState = new GameState();
+    private GameObject player1;
+    private GameObject player2;
+    private Dictionary<int, GameObject> projectileVisuals = new Dictionary<int, GameObject>();
 
 
     // UNITY METHODS
-    private void Start()
-    {
-        // DEBUG TESTING
-        PlayMode = Modes.SinglePlayer;
-
-        SpawnPlayers(playerPrefab, spawnPosition1.transform.position, spawnPosition2.transform.position, PlayMode);
-    }
-
     private void FixedUpdate()
     {
         InputFrame input = inputHandler.ConsumeInput();
-        gameState = SendInputToServer(input);
+        BuildGameState(SendInputToServer(input));
     }
 
 
-    // GENERAL METHODS
-    private void SpawnPlayers(GameObject playerPrefab, Vector3 spawnPosition1, Vector3 spawnPosition2, Modes mode)
+    // BUILD GAMESTATE
+    private void BuildGameState(GameState gameState)
     {
-        switch (mode)
+        SyncPlayersVisuals(gameState);
+        SyncProjectileVisuals(gameState);
+    }
+
+    private void SyncPlayersVisuals(GameState gameState)
+    {
+        Vector3 p1World = gameState.Player1.Position.ToUnityWorld();
+        Vector3 p2World = gameState.Player2.Position.ToUnityWorld();
+
+        if (player1 == null)
+            player1 = Instantiate(playerPrefab, p1World, Quaternion.identity);
+        else
+            player1.transform.position = p1World;
+
+        if (player2 == null)
+            player2 = Instantiate(playerPrefab, p2World, Quaternion.identity);
+        else
+            player2.transform.position = p2World;
+    }
+
+    private void SyncProjectileVisuals(GameState gameState)
+    {
+        var currentIds = new HashSet<int>(gameState.projectilesQ.Select(p => p.projectileId));
+
+        var idsToRemove = projectileVisuals.Keys.Where(id => !currentIds.Contains(id)).ToList();
+        foreach (int id in idsToRemove)
         {
-            case Modes.SinglePlayer:
-                SinglePlayerSpawnPlayers(playerPrefab, spawnPosition1, spawnPosition2);
-                break;
-            case Modes.MultiPlayer:
-                MultiPlayerSpawnPlayers(playerPrefab, spawnPosition1, spawnPosition2);
-                break;
-            default:
-                Debug.LogError("Invalid game mode selected.");
-                break;
+            Destroy(projectileVisuals[id]);
+            projectileVisuals.Remove(id);
         }
-    }
 
-    // SINGLE PLAYER METHODS
-    private void SinglePlayerSpawnPlayers(GameObject playerPrefab, Vector3 spawnPosition1, Vector3 spawnPosition2)
-    {
-        Instantiate(playerPrefab, spawnPosition1, Quaternion.identity);
-        Instantiate(npcPrefab, spawnPosition2, Quaternion.identity);
-    }
+        foreach (var projectile in gameState.projectilesQ)
+        {
+            Vector3 worldPos = projectile.position.ToUnityWorld(1f);
 
-    // MULTI PLAYER METHODS
-    private void MultiPlayerSpawnPlayers(GameObject playerPrefab, Vector3 spawnPosition1, Vector3 spawnPosition2)
-    {
-        throw new System.NotImplementedException();
+            if (!projectileVisuals.ContainsKey(projectile.projectileId))
+            {
+                GameObject obj = Instantiate(projectilePrefab, worldPos, Quaternion.identity);
+                projectileVisuals[projectile.projectileId] = obj;
+            }
+            else
+            {
+                projectileVisuals[projectile.projectileId].transform.position = worldPos;
+            }
+        }
     }
 
 
@@ -72,7 +81,4 @@ public class GameManager : MonoBehaviour
     {
         return Server.Instance.Tick(input, Time.fixedDeltaTime);
     }
-
-    System.Numerics.Vector3 ConvertToSystemVector(UnityEngine.Vector3 v)
-    => new System.Numerics.Vector3(v.x, v.y, v.z);
 }

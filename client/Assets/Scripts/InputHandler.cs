@@ -8,10 +8,10 @@ public class InputHandler : MonoBehaviour
     private PlayerInput controls;
 
     private Vector2 targetPosition;
+    private bool hasMoveTarget;
     private Vector2 lookingDirection;
     private bool isShooting;
     [SerializeField] private LayerMask groundLayerMask;
-
 
 
     // UNITY METHODS
@@ -64,9 +64,8 @@ public class InputHandler : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, groundLayerMask))
         {
-            Vector3 direction = (hit.point - transform.position);
-            direction.y = 0f;
-            direction.Normalize();
+            Vector3 rawDirection = hit.point - transform.position;
+            Vector2 direction = new Vector2(rawDirection.x, rawDirection.z).normalized; // explicit, correct axis mapping
 
             RecordShooting(direction, true);
         }
@@ -75,6 +74,7 @@ public class InputHandler : MonoBehaviour
     private void RecordMoveTarget(Vector2 targetPosition)
     {
         this.targetPosition = targetPosition;
+        this.hasMoveTarget = true; // NEW
     }
 
     private void RecordShooting(Vector2 lookingDirection, bool isShooting)
@@ -87,8 +87,11 @@ public class InputHandler : MonoBehaviour
     {
         InputFrame frame = new InputFrame
         {
-            targetPosition = this.targetPosition,
-            lookingDirection = this.lookingDirection,
+            // TODO: Delete PlayerId when server connects to client and assigns it automatically
+            PlayerId = 0,
+            targetPosition = Helper.ToNumerics(this.targetPosition),
+            hasMoveTarget = this.hasMoveTarget,
+            lookingDirection = Helper.ToNumerics(this.lookingDirection),
             isShooting = this.isShooting
         };
 
@@ -96,5 +99,4 @@ public class InputHandler : MonoBehaviour
 
         return frame;
     }
-
 }

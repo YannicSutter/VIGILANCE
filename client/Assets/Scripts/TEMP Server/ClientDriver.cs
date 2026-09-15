@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class ClientDriver : MonoBehaviour
 {
-    GameState gameState = new GameState();
     InputFrame input = new InputFrame();
 
     // UNITY METHODS

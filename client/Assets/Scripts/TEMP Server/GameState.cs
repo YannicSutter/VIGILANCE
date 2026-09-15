@@ -1,23 +1,23 @@
-using System.Numerics;
 using System.Collections.Generic;
 
 public class GameState
 {
-    // PLAYER 1
-    private Vector2 player1Position;
-    private Vector2 player1targetPosition;
+    // PLAYERS
+    public PlayerState Player1 {get; set; }
+    public PlayerState Player2 {get; set; }
 
-    // PLAYER 2    
-    private Vector2 player2Position;
-    private Vector2 player2targetPosition;
 
     // PROJECTILES
-    private List<Projectile> projectiles;
+    public List<ProjectileState> projectilesQ { get; set; }
 
-    public GameState()
+
+    // CONSTRUCTOR
+    public GameState(PlayerState player1, PlayerState player2)
     {
-        player1Position = Vector2.Zero;
-        player2Position = Vector2.Zero;
-        projectiles = new List<Projectile>();
+        this.Player1 = player1;
+        this.Player2 = player2;
+    
+        projectilesQ = new List<ProjectileState>();
     }
+
 }

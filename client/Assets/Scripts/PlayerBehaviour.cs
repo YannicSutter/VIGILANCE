@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Player : MonoBehaviour
+public class PlayerBehaviour : MonoBehaviour
 {
     // UNITY METHODS
     private void Start()
