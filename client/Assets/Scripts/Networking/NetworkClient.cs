@@ -13,7 +13,7 @@ public class NetworkClient : MonoBehaviour
     public GameState LatestState { get; private set; }
     public bool IsConnected => serverPeer != null && serverPeer.ConnectionState == ConnectionState.Connected;
 
-    private string serverAddress = "127.0.0.1"; 
+    private string serverAddress = "83.228.210.108"; 
     private int serverPort = 9050;
 
     private void Awake()
