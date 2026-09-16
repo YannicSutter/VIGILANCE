@@ -1,0 +1,7 @@
+{
+  "name": "com.vigilance.shared",
+  "version": "1.0.0",
+  "displayName": "Vigilance Shared",
+  "description": "Shared data types between Vigilance client and server",
+  "unity": "2021.1"
+}

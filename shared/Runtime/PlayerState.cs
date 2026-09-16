@@ -7,7 +7,7 @@ public class PlayerState
     public Vector2 Position { get; set; }
     public int Health { get; set; } = 5;
     public float MovementSpeed { get; set; } = 5;
-    public float QCooldown { get; set; } = 5;
+    public float QCooldown { get; set; } = 0;
     public float CurrentQCooldown {get; set; } = 0;
 
 

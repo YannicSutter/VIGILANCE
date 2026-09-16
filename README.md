@@ -15,6 +15,7 @@ Vigilance combines two complementary defense layers:
 - `/server` — Authoritative game server
 - `/ml` — Neural network training pipeline and models
 - `/data` — Collected input telemetry (not committed — see `.gitignore`)
+- `/shared` - Shared data that needs to exist on the client and the server
 
 ## Status
 

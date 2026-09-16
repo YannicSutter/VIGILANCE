@@ -15,7 +15,6 @@ public class ProjectileState
     // CONSTRUCTOR
     public ProjectileState(int playerId, Vector2 startPosition, Vector2 direction)
     {
-        ProjectileId = Server.Instance.GetNextProjectileId();
         this.PlayerId = playerId;
         this.StartPosition = startPosition;
         this.Position = startPosition;

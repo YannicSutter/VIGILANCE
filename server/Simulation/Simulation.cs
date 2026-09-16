@@ -1,14 +1,7 @@
-using System;
 using System.Numerics;
-using System.Collections.Generic;
 
-public class Server
+public class Simulation
 {
-    // SINGLETON
-    private static Server _instance;
-    public static Server Instance => _instance ??= new Server();
-
-
     // VARIABLES
     private static Vector2 player1SpawnPosition = new Vector2(-4, 0);
     private static Vector2 player2SpawnPosition = new Vector2(4, 0);
@@ -16,40 +9,37 @@ public class Server
     private Tuple<float, float> arenaPlayer1 = new Tuple<float, float>(-7, 4.5f);
     private Tuple<float, float> arenaPlayer2 = new Tuple<float, float>(7, 4.5f);
 
-
-    // INPUTS
     private GameState gameState = new GameState
     (
-        new PlayerState(0, player1SpawnPosition), 
+        new PlayerState(0, player1SpawnPosition),
         new PlayerState(1, player2SpawnPosition)
     );
 
-
-    // SERVER METHODS
-    public GameState Tick(InputFrame input, float deltaTime)
+    // SIMULATION METHODS
+    public GameState Tick(InputFrame player1Input, InputFrame player2Input, float deltaTime)
     {
         // INPUT MOVING
-        if (input.PlayerId == 0 && input.hasMoveTarget)
-            MoveTowards(gameState.Player1, input.targetPosition, deltaTime);
-        else if (input.PlayerId == 1 && input.hasMoveTarget)
-            MoveTowards(gameState.Player2, input.targetPosition, deltaTime);
+        if (player1Input.hasMoveTarget)
+            MoveTowards(gameState.Player1, player1Input.targetPosition, deltaTime);
+        if (player2Input.hasMoveTarget)
+            MoveTowards(gameState.Player2, player2Input.targetPosition, deltaTime);
 
         // COOLDOWNS
         gameState.Player1.CurrentQCooldown = Math.Clamp(gameState.Player1.CurrentQCooldown - deltaTime, 0, gameState.Player1.QCooldown);
         gameState.Player2.CurrentQCooldown = Math.Clamp(gameState.Player2.CurrentQCooldown - deltaTime, 0, gameState.Player2.QCooldown);
 
         // INPUT SHOOTING
-        if (input.PlayerId == 0 && input.isShooting && gameState.Player1.CurrentQCooldown <= 0)
+        if (player1Input.isShooting && gameState.Player1.CurrentQCooldown <= 0)
         {
-            gameState.projectilesQ.Add(new ProjectileState(input.PlayerId, gameState.Player1.Position, Vector2.Normalize(input.lookingDirection)));
+            gameState.projectilesQ.Add(CreateProjectile(0, gameState.Player1.Position, Vector2.Normalize(player1Input.lookingDirection)));
             gameState.Player1.CurrentQCooldown = gameState.Player1.QCooldown;
         }
-        else if (input.PlayerId == 1 && input.isShooting && gameState.Player2.CurrentQCooldown <= 0)
+        if (player2Input.isShooting && gameState.Player2.CurrentQCooldown <= 0)
         {
-            gameState.projectilesQ.Add(new ProjectileState(input.PlayerId, gameState.Player2.Position, Vector2.Normalize(input.lookingDirection)));
+            gameState.projectilesQ.Add(CreateProjectile(1, gameState.Player2.Position, Vector2.Normalize(player2Input.lookingDirection)));
             gameState.Player2.CurrentQCooldown = gameState.Player2.QCooldown;
         }
-            
+
         // PROJECTILE MOVING
         foreach (var projectileQ in gameState.projectilesQ)
         {
@@ -64,6 +54,13 @@ public class Server
         IsGameOver();
 
         return gameState;
+    }
+
+    private ProjectileState CreateProjectile(int playerId, Vector2 startPosition, Vector2 direction)
+    {
+        var projectile = new ProjectileState(playerId, startPosition, direction);
+        projectile.ProjectileId = nextProjectileId++;
+        return projectile;
     }
 
     private void MoveTowards(PlayerState player, Vector2 target, float deltaTime)
@@ -128,7 +125,7 @@ public class Server
     private void IsGameOver()
     {
         if (gameState.Player1.Health <= 0 || gameState.Player2.Health <= 0)
-            gameState.IsGameOver = true; 
+            gameState.IsGameOver = true;
     }
 
     public int GetNextProjectileId()

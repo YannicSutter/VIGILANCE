@@ -21,11 +21,16 @@ public class GameManager : MonoBehaviour
     // UNITY METHODS
     private void FixedUpdate()
     {
-        if (!gameState.IsGameOver)
+        if (gameState != null && !gameState.IsGameOver)
         {
             InputFrame input = inputHandler.ConsumeInput();
-            gameState = SendInputToServer(input);
-            BuildGameState(gameState);
+            NetworkClient.Instance.SendInput(input);
+
+            if (NetworkClient.Instance.LatestState != null)
+            {
+                gameState = NetworkClient.Instance.LatestState;
+                BuildGameState(gameState);
+            }
         }
     }
 
@@ -78,12 +83,5 @@ public class GameManager : MonoBehaviour
                 projectileVisuals[projectile.ProjectileId].transform.position = worldPos;
             }
         }
-    }
-
-
-    // SERVER CONNECTION
-    private GameState SendInputToServer(InputFrame input)
-    {
-        return Server.Instance.Tick(input, Time.fixedDeltaTime);
     }
 }
