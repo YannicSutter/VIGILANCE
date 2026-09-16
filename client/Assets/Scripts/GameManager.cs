@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour
                 BuildGameState(gameState);
             }
         }
+        Debug.Log($"Ping: {NetworkClient.Instance.Ping}ms");
     }
 
 
