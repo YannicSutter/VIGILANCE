@@ -9,7 +9,7 @@ public class NetworkManager
     private readonly Simulation simulation;
 
     private readonly Dictionary<NetPeer, int> peerToPlayerId = new();
-    private int nextPlayerId = 0;
+    private readonly HashSet<int> availablePlayerIds = new() { 0, 1 };
 
     private InputFrame player1Input = new InputFrame();
     private InputFrame player2Input = new InputFrame();
@@ -25,14 +25,15 @@ public class NetworkManager
 
         listener.PeerConnectedEvent += peer =>
         {
-            if (nextPlayerId > 1)
+            if (availablePlayerIds.Count == 0)
             {
                 Console.WriteLine($"Rejected connection, server full: {peer}");
                 peer.Disconnect();
                 return;
             }
 
-            int assignedId = nextPlayerId++;
+            int assignedId = availablePlayerIds.Min();
+            availablePlayerIds.Remove(assignedId);
             peerToPlayerId[peer] = assignedId;
             Console.WriteLine($"Player {assignedId} connected: {peer}");
         };
@@ -41,8 +42,9 @@ public class NetworkManager
         {
             if (peerToPlayerId.TryGetValue(peer, out int playerId))
             {
-                Console.WriteLine($"Player {playerId} disconnected: {reason}");
+                Console.WriteLine($"Player {playerId} disconnected: {reason.Reason}");
                 peerToPlayerId.Remove(peer);
+                availablePlayerIds.Add(playerId);
             }
         };
 

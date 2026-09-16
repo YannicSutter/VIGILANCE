@@ -41,6 +41,7 @@ public class NetworkClient : MonoBehaviour
         listener.PeerDisconnectedEvent += (peer, reason) =>
         {
             Debug.Log($"Disconnected from server: {reason}");
+            Debug.Log($"Disconnected from server: {reason.Reason}");
             serverPeer = null;
         };
 
@@ -58,7 +59,9 @@ public class NetworkClient : MonoBehaviour
 
         NetDataWriter writer = new NetDataWriter();
         writer.Put(input);
-        serverPeer.Send(writer, DeliveryMethod.Unreliable);
+
+        DeliveryMethod method = input.isShooting ? DeliveryMethod.ReliableOrdered : DeliveryMethod.Unreliable;
+        serverPeer.Send(writer, method);
     }
 
     private void OnDestroy()
