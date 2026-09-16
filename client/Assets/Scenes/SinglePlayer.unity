@@ -911,6 +911,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a9ab741458f8314bab4692b3ce38147, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputHandler
+  moveIndicatorPrefab: {fileID: 1414618399338087343, guid: 2cf939648111eb2469ce710060b7ffca, type: 3}
   groundLayerMask:
     serializedVersion: 2
     m_Bits: 8

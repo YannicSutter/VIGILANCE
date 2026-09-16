@@ -11,6 +11,9 @@ public class InputHandler : MonoBehaviour
     private bool hasMoveTarget;
     private Vector2 lookingDirection;
     private bool isShooting;
+    private GameManager gameManager;
+
+    [SerializeField] private GameObject moveIndicatorPrefab;
     [SerializeField] private LayerMask groundLayerMask;
 
 
@@ -18,6 +21,7 @@ public class InputHandler : MonoBehaviour
     private void Awake()
     {
         controls = new PlayerInput();
+        gameManager = GetComponent<GameManager>();
     }
 
     void OnEnable()
@@ -34,16 +38,6 @@ public class InputHandler : MonoBehaviour
         controls.Disable();
     }
 
-    private void Start()
-    {
-        
-    }
-
-    private void Update()
-    {
-        
-    }
-
 
     // INPUT METHODS
     private void OnMovePerformed(InputAction.CallbackContext context)
@@ -54,6 +48,8 @@ public class InputHandler : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, groundLayerMask))
         {
             RecordMoveTarget(new Vector2(hit.point.x, hit.point.z));
+            GameObject moveIndicator = Instantiate(moveIndicatorPrefab, hit.point, Quaternion.identity);
+            Destroy(moveIndicator, 0.2f);
         }
     }
 
@@ -64,9 +60,10 @@ public class InputHandler : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, groundLayerMask))
         {
-            Vector3 rawDirection = hit.point - transform.position;
-            Vector2 direction = new Vector2(rawDirection.x, rawDirection.z).normalized; // explicit, correct axis mapping
+            Vector2 clickPos = new Vector2(hit.point.x, hit.point.z);
+            Vector2 playerPos = new Vector2(gameManager.Player1.transform.position.x, gameManager.Player1.transform.position.z);
 
+            Vector2 direction = (clickPos - playerPos).normalized;
             RecordShooting(direction, true);
         }
     }

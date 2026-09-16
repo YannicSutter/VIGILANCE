@@ -2,13 +2,11 @@ using System.Collections.Generic;
 
 public class GameState
 {
-    // PLAYERS
+    // VARIABLES
     public PlayerState Player1 {get; set; }
     public PlayerState Player2 {get; set; }
-
-
-    // PROJECTILES
     public List<ProjectileState> projectilesQ { get; set; }
+    public bool IsGameOver { get; set; } = false;
 
 
     // CONSTRUCTOR
