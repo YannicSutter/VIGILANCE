@@ -1,6 +1,5 @@
 using LiteNetLib;
 using LiteNetLib.Utils;
-using System.Collections.Generic;
 
 public class NetworkManager
 {
@@ -59,8 +58,20 @@ public class NetworkManager
             InputFrame input = reader.GetInputFrame();
             reader.Recycle();
 
-            if (playerId == 0) player1Input = input;
-            else player2Input = input;
+            if (playerId == 0)
+            {
+                player1Input.targetPosition = input.targetPosition;
+                player1Input.hasMoveTarget = input.hasMoveTarget;
+                player1Input.lookingDirection = input.lookingDirection;
+                player1Input.isShooting = player1Input.isShooting || input.isShooting;
+            }
+            else
+            {
+                player2Input.targetPosition = input.targetPosition;
+                player2Input.hasMoveTarget = input.hasMoveTarget;
+                player2Input.lookingDirection = input.lookingDirection;
+                player2Input.isShooting = player2Input.isShooting || input.isShooting;
+            }
         };
     }
 
@@ -73,6 +84,9 @@ public class NetworkManager
     {
         GameState state = simulation.Tick(player1Input, player2Input, deltaTime);
         BroadcastState(state);
+
+            player1Input.isShooting = false;
+            player2Input.isShooting = false;
     }
 
     private void BroadcastState(GameState state)
