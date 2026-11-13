@@ -1,13 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using LiteNetLib;
 
 public class MainMenuManager : MonoBehaviour
 {
     // UI Canvas
     [SerializeField] private Canvas mainMenu;
-    [SerializeField] private Canvas multiPlayerQueue;
-    [SerializeField] private Canvas multiPlayerQueuePop;
+    [SerializeField] private Canvas Queue;
+    [SerializeField] private Canvas QueuePop;
 
     // Main Menu Buttons
     [SerializeField] private Button singlePlayerButton;
@@ -19,10 +20,11 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private Button declineQueueButton;
     [SerializeField] private Button acceptQueueButton;
 
-    // Scenes
+
     private string gameSceneName = "Arena";
+    private GameMode requestedMode;
 
-
+    // Unity Methods
     private void Awake()
     {
         singlePlayerButton.onClick.AddListener(OnSinglePlayer);
@@ -35,6 +37,22 @@ public class MainMenuManager : MonoBehaviour
         ShowCanvas(mainMenu);
     }
 
+    private void Start()
+    {
+        NetworkClient.Instance.Connected += OnConnected;
+        NetworkClient.Instance.Disconnected += OnDisconnected;
+    }
+
+    private void OnConnected()
+    {
+         Debug.Log("Menu: connected");
+    }
+
+    private void OnDisconnected(DisconnectReason reason)
+    {
+        Debug.Log($"Menu: disconnected, reason {reason}");
+    }
+
     private void OnDestroy()
     {
         singlePlayerButton.onClick.RemoveListener(OnSinglePlayer);
@@ -45,22 +63,24 @@ public class MainMenuManager : MonoBehaviour
     private void ShowCanvas(Canvas target)
     {
         mainMenu.gameObject.SetActive(mainMenu == target);
-        multiPlayerQueue.gameObject.SetActive(multiPlayerQueue == target);
-        multiPlayerQueuePop.gameObject.SetActive(multiPlayerQueuePop == target);
+        Queue.gameObject.SetActive(Queue == target);
+        QueuePop.gameObject.SetActive(QueuePop == target);
     }
 
     private void OnSinglePlayer()
     {
-        //TODO; Create Network Connection for Singleplayer
+        requestedMode = GameMode.SinglePlayer;
+        NetworkClient.Instance.Connect(requestedMode);
 
-        SceneManager.LoadScene(gameSceneName);
+        ShowCanvas(Queue);
     }
 
     private void OnMultiPlayer()
     {
-        // TODO: Create network connection for Multiplayer
+        requestedMode = GameMode.MultiPlayer;
+        NetworkClient.Instance.Connect(requestedMode);
 
-        ShowCanvas(multiPlayerQueue);
+        ShowCanvas(Queue);
     }
 
     private void OnCancelQueue()

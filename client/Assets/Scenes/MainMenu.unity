@@ -145,7 +145,7 @@ Transform:
   m_GameObject: {fileID: 21638674}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 519.9891, y: -0, z: 3596.5298}
+  m_LocalPosition: {x: 0, y: -0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -164,8 +164,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuManager
   mainMenu: {fileID: 1161368465}
-  multiPlayerQueue: {fileID: 1491361124}
-  multiPlayerQueuePop: {fileID: 882211378}
+  Queue: {fileID: 1491361124}
+  QueuePop: {fileID: 882211378}
   singlePlayerButton: {fileID: 1358479578}
   multiPlayerButton: {fileID: 267589310}
   exitButton: {fileID: 1970901764}
@@ -751,6 +751,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 434197744}
   m_CullTransparentMesh: 1
+--- !u!1 &554434395
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 554434396}
+  - component: {fileID: 554434397}
+  m_Layer: 0
+  m_Name: NetworkingManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &554434396
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554434395}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &554434397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 554434395}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62d847944c159ad47aca1b07ab82127e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkClient
 --- !u!1 &640125967
 GameObject:
   m_ObjectHideFlags: 0
@@ -1038,7 +1082,7 @@ GameObject:
   - component: {fileID: 882211377}
   - component: {fileID: 882211376}
   m_Layer: 5
-  m_Name: MultiPlayerQueuePop
+  m_Name: QueuePop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2314,7 +2358,7 @@ GameObject:
   - component: {fileID: 1491361123}
   - component: {fileID: 1491361122}
   m_Layer: 5
-  m_Name: MultiPlayerQueue
+  m_Name: Queue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3084,6 +3128,7 @@ SceneRoots:
   - {fileID: 1457755633}
   - {fileID: 327063903}
   - {fileID: 21638675}
+  - {fileID: 554434396}
   - {fileID: 1161368466}
   - {fileID: 1491361125}
   - {fileID: 882211379}

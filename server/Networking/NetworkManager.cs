@@ -1,5 +1,7 @@
 using LiteNetLib;
 using LiteNetLib.Utils;
+using System.Collections.Generic;
+using System.Linq;
 
 public class NetworkManager
 {
@@ -8,6 +10,7 @@ public class NetworkManager
     private readonly Simulation simulation;
 
     private readonly Dictionary<NetPeer, int> peerToPlayerId = new();
+    private readonly Dictionary<int, GameMode> peerToMode = new();
     private readonly HashSet<int> availablePlayerIds = new() { 0, 1 };
 
     private InputFrame player1Input = new InputFrame();
@@ -20,7 +23,36 @@ public class NetworkManager
         server = new NetManager(listener);
         server.Start(port);
 
-        listener.ConnectionRequestEvent += request => request.AcceptIfKey("VigilanceKey");
+        listener.ConnectionRequestEvent += request =>
+        {
+            string key;
+            byte modeValue;
+
+            bool hasKey = request.Data.TryGetString(out key);
+            bool hasMode = request.Data.TryGetByte(out modeValue);
+
+            if (!hasKey || !hasMode)
+            {
+                request.Reject();
+                return;
+            }
+
+            if (key != "VigilanceKey")
+            {
+                request.Reject();
+                return;
+            }
+
+            GameMode mode = (GameMode)modeValue;
+            if (!Enum.IsDefined(typeof(GameMode), mode))
+            {
+                request.Reject();
+                return;
+            }
+
+            var peer = request.Accept();
+            peerToMode[peer.Id] = mode;
+        };
 
         listener.PeerConnectedEvent += peer =>
         {
@@ -34,11 +66,20 @@ public class NetworkManager
             int assignedId = availablePlayerIds.Min();
             availablePlayerIds.Remove(assignedId);
             peerToPlayerId[peer] = assignedId;
-            Console.WriteLine($"Player {assignedId} connected: {peer}");
+
+            GameMode mode = GameMode.SinglePlayer;
+            if (peerToMode.ContainsKey(peer.Id))
+            {
+                mode = peerToMode[peer.Id];
+            }
+
+            Console.WriteLine($"Player {assignedId} connected ({mode}): {peer}");
         };
 
         listener.PeerDisconnectedEvent += (peer, reason) =>
         {
+            peerToMode.Remove(peer.Id);
+
             if (peerToPlayerId.TryGetValue(peer, out int playerId))
             {
                 Console.WriteLine($"Player {playerId} disconnected: {reason.Reason}");
@@ -85,8 +126,8 @@ public class NetworkManager
         GameState state = simulation.Tick(player1Input, player2Input, deltaTime);
         BroadcastState(state);
 
-            player1Input.isShooting = false;
-            player2Input.isShooting = false;
+        player1Input.isShooting = false;
+        player2Input.isShooting = false;
     }
 
     private void BroadcastState(GameState state)
