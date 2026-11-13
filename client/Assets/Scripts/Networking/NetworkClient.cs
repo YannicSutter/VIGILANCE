@@ -9,6 +9,7 @@ public class NetworkClient : MonoBehaviour
 
     public event Action Connected;
     public event Action<DisconnectReason> Disconnected;
+    public event Action MatchCreated;
 
     private NetManager client;
     private EventBasedNetListener listener;
@@ -49,7 +50,21 @@ public class NetworkClient : MonoBehaviour
 
         listener.NetworkReceiveEvent += (peer, reader, channel, deliveryMethod) =>
         {
-            LatestState = reader.GetGameState();
+            MessageType type = (MessageType)reader.GetByte();
+            Debug.Log($"Received message: {type}");
+
+            if (type == MessageType.State)
+            {
+                LatestState = reader.GetGameState();
+            }
+            else if (type == MessageType.MatchCreated)
+            {
+                if (MatchCreated != null)
+                {
+                    MatchCreated.Invoke();
+                }
+            }
+
             reader.Recycle();
         };
 

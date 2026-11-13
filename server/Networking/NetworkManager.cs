@@ -74,6 +74,11 @@ public class NetworkManager
             }
 
             Console.WriteLine($"Player {assignedId} connected ({mode}): {peer}");
+
+            if (mode == GameMode.SinglePlayer)
+            {
+                SendMatchCreated(peer);
+            }
         };
 
         listener.PeerDisconnectedEvent += (peer, reason) =>
@@ -130,9 +135,18 @@ public class NetworkManager
         player2Input.isShooting = false;
     }
 
+    private void SendMatchCreated(NetPeer peer)
+    {
+        NetDataWriter writer = new NetDataWriter();
+        writer.Put((byte)MessageType.MatchCreated);
+        peer.Send(writer, DeliveryMethod.ReliableOrdered);
+        Console.WriteLine($"Sent MatchCreated to {peer}");
+    }
+
     private void BroadcastState(GameState state)
     {
         NetDataWriter writer = new NetDataWriter();
+        writer.Put((byte)MessageType.State);
         writer.Put(state);
 
         foreach (var peer in peerToPlayerId.Keys)
