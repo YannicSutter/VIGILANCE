@@ -43,9 +43,13 @@ public static class Serialization
         writer.Put(state.Player1);
         writer.Put(state.Player2);
         writer.Put(state.IsGameOver);
-        writer.Put(state.projectilesQ.Count);
-        foreach (var projectile in state.projectilesQ)
+        writer.Put(state.TimeRemaining);
+        writer.Put(state.ProjectilesQ.Count);
+
+        foreach (var projectile in state.ProjectilesQ)
+        {
             writer.Put(projectile);
+        }
     }
 
     public static GameState GetGameState(this NetDataReader reader)
@@ -53,12 +57,17 @@ public static class Serialization
         var player1 = reader.GetPlayerState();
         var player2 = reader.GetPlayerState();
         bool isGameOver = reader.GetBool();
+        float timeRemaining = reader.GetFloat();
 
-        var state = new GameState(player1, player2) { IsGameOver = isGameOver };
+        var state = new GameState(player1, player2);
+        state.IsGameOver = isGameOver;
+        state.TimeRemaining = timeRemaining;
 
         int projectileCount = reader.GetInt();
         for (int i = 0; i < projectileCount; i++)
-            state.projectilesQ.Add(reader.GetProjectileState());
+        {
+            state.ProjectilesQ.Add(reader.GetProjectileState());
+        }
 
         return state;
     }
@@ -68,7 +77,7 @@ public static class Serialization
     {
         writer.Put(player.PlayerId);
         writer.Put(player.Position);
-        writer.Put(player.Health);
+        writer.Put(player.Score);
         writer.Put(player.CurrentQCooldown);
     }
 
@@ -77,7 +86,7 @@ public static class Serialization
         int playerId = reader.GetInt();
         var position = reader.GetVector2();
         var player = new PlayerState(playerId, position);
-        player.Health = reader.GetInt();
+        player.Score = reader.GetInt();
         player.CurrentQCooldown = reader.GetFloat();
         return player;
     }

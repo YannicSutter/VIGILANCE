@@ -61,7 +61,7 @@ public class GameManager : MonoBehaviour
 
     private void SyncProjectileVisuals(GameState gameState)
     {
-        var currentIds = new HashSet<int>(gameState.projectilesQ.Select(p => p.ProjectileId));
+        var currentIds = new HashSet<int>(gameState.ProjectilesQ.Select(p => p.ProjectileId));
 
         var idsToRemove = projectileVisuals.Keys.Where(id => !currentIds.Contains(id)).ToList();
         foreach (int id in idsToRemove)
@@ -70,7 +70,7 @@ public class GameManager : MonoBehaviour
             projectileVisuals.Remove(id);
         }
 
-        foreach (var projectile in gameState.projectilesQ)
+        foreach (var projectile in gameState.ProjectilesQ)
         {
             Vector3 worldPos = projectile.Position.ToUnityWorld(1f);
 

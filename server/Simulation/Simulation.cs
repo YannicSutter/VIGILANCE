@@ -2,12 +2,17 @@ using System.Numerics;
 
 public class Simulation
 {
+    // CONSTANTS
+    private const float MatchDurationSeconds = 60f;
+
     // VARIABLES
     private static Vector2 player1SpawnPosition = new Vector2(-4, 0);
     private static Vector2 player2SpawnPosition = new Vector2(4, 0);
     private int nextProjectileId = 0;
     private Tuple<float, float> arenaPlayer1 = new Tuple<float, float>(-7, 4.5f);
     private Tuple<float, float> arenaPlayer2 = new Tuple<float, float>(7, 4.5f);
+    private Vector2[] targetPositions = new Vector2[2];
+    private bool[] hasMoveTargets = new bool[2];
 
     private GameState gameState = new GameState
     (
@@ -15,45 +20,83 @@ public class Simulation
         new PlayerState(1, player2SpawnPosition)
     );
 
-    // SIMULATION METHODS
-    public GameState Tick(InputFrame player1Input, InputFrame player2Input, float deltaTime)
+    // CONSTRUCTOR
+    public Simulation()
     {
-        // INPUT MOVING
-        if (player1Input.hasMoveTarget)
-            MoveTowards(gameState.Player1, player1Input.targetPosition, deltaTime);
-        if (player2Input.hasMoveTarget)
-            MoveTowards(gameState.Player2, player2Input.targetPosition, deltaTime);
+        gameState.TimeRemaining = MatchDurationSeconds;
+    }
+
+    // APPLY ONE INPUT (once per frame from the queue)
+    public void ApplyInput(int slot, InputFrame input)
+    {
+        if (slot != 0 && slot != 1)
+        {
+            return;
+        }
+
+        PlayerState player = GetPlayer(slot);
+
+        // MOVE TARGET
+        if (input.hasMoveTarget)
+        {
+            targetPositions[slot] = input.targetPosition;
+            hasMoveTargets[slot] = true;
+        }
+
+        // SHOOTING
+        bool hasDirection = input.lookingDirection != Vector2.Zero;
+
+        if (input.isShooting && hasDirection && player.CurrentQCooldown <= 0)
+        {
+            Vector2 direction = Vector2.Normalize(input.lookingDirection);
+            gameState.ProjectilesQ.Add(CreateProjectile(slot, player.Position, direction));
+            player.CurrentQCooldown = player.QCooldown;
+        }
+    }
+
+    // STEP THE WORLD (once per tick)
+    public GameState StepWorld(float deltaTime)
+    {
+        // PLAYER MOVING
+        if (hasMoveTargets[0])
+        {
+            MoveTowards(gameState.Player1, targetPositions[0], deltaTime);
+        }
+        if (hasMoveTargets[1])
+        {
+            MoveTowards(gameState.Player2, targetPositions[1], deltaTime);
+        }
 
         // COOLDOWNS
         gameState.Player1.CurrentQCooldown = Math.Clamp(gameState.Player1.CurrentQCooldown - deltaTime, 0, gameState.Player1.QCooldown);
         gameState.Player2.CurrentQCooldown = Math.Clamp(gameState.Player2.CurrentQCooldown - deltaTime, 0, gameState.Player2.QCooldown);
 
-        // INPUT SHOOTING
-        if (player1Input.isShooting && gameState.Player1.CurrentQCooldown <= 0)
-        {
-            gameState.projectilesQ.Add(CreateProjectile(0, gameState.Player1.Position, Vector2.Normalize(player1Input.lookingDirection)));
-            gameState.Player1.CurrentQCooldown = gameState.Player1.QCooldown;
-        }
-        if (player2Input.isShooting && gameState.Player2.CurrentQCooldown <= 0)
-        {
-            gameState.projectilesQ.Add(CreateProjectile(1, gameState.Player2.Position, Vector2.Normalize(player2Input.lookingDirection)));
-            gameState.Player2.CurrentQCooldown = gameState.Player2.QCooldown;
-        }
-
         // PROJECTILE MOVING
-        foreach (var projectileQ in gameState.projectilesQ)
+        foreach (var projectileQ in gameState.ProjectilesQ)
         {
             projectileQ.Move(deltaTime);
         }
 
         // PROJECTILE REMOVING
-        gameState.projectilesQ.RemoveAll(p => p.HasExceededRange());
+        gameState.ProjectilesQ.RemoveAll(p => p.HasExceededRange());
 
         // COLLISIONS
         CheckCollisions();
-        IsGameOver();
+
+        // MATCH TIMER
+        UpdateTimer(deltaTime);
 
         return gameState;
+    }
+
+    private void UpdateTimer(float deltaTime)
+    {
+        gameState.TimeRemaining = Math.Max(0, gameState.TimeRemaining - deltaTime);
+
+        if (gameState.TimeRemaining <= 0)
+        {
+            gameState.IsGameOver = true;
+        }
     }
 
     private ProjectileState CreateProjectile(int playerId, Vector2 startPosition, Vector2 direction)
@@ -95,13 +138,13 @@ public class Simulation
     {
         List<ProjectileState> toRemove = new List<ProjectileState>();
 
-        foreach (var projectile in gameState.projectilesQ)
+        foreach (var projectile in gameState.ProjectilesQ)
         {
             if (projectile.PlayerId == 0)
             {
                 if (Vector2.Distance(gameState.Player2.Position, projectile.Position) <= gameState.Player2.Radius + projectile.Radius)
                 {
-                    gameState.Player2.ReduceHealth();
+                    gameState.Player1.IncreaseScore();
                     toRemove.Add(projectile);
                 }
             }
@@ -109,7 +152,7 @@ public class Simulation
             {
                 if (Vector2.Distance(gameState.Player1.Position, projectile.Position) <= gameState.Player1.Radius + projectile.Radius)
                 {
-                    gameState.Player1.ReduceHealth();
+                    gameState.Player2.IncreaseScore();
                     toRemove.Add(projectile);
                 }
             }
@@ -117,19 +160,17 @@ public class Simulation
 
         foreach (var projectile in toRemove)
         {
-            gameState.projectilesQ.Remove(projectile);
+            gameState.ProjectilesQ.Remove(projectile);
         }
     }
 
-    // PLAYER HEALTH
-    private void IsGameOver()
+    private PlayerState GetPlayer(int slot)
     {
-        if (gameState.Player1.Health <= 0 || gameState.Player2.Health <= 0)
-            gameState.IsGameOver = true;
-    }
+        if (slot == 0)
+        {
+            return gameState.Player1;
+        }
 
-    public int GetNextProjectileId()
-    {
-        return nextProjectileId++;
+        return gameState.Player2;
     }
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using LiteNetLib;
+using TMPro;
 
 public class MainMenuManager : MonoBehaviour
 {
@@ -21,7 +22,7 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private Button acceptQueueButton;
 
     // Error message on the main menu
-    [SerializeField] private Text errorText;
+    [SerializeField] private TMP_Text errorText;
 
     private string gameSceneName = "Arena";
     private GameMode requestedMode;

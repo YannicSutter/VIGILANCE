@@ -5,7 +5,8 @@ public class GameState
     // VARIABLES
     public PlayerState Player1 {get; set; }
     public PlayerState Player2 {get; set; }
-    public List<ProjectileState> projectilesQ { get; set; }
+    public List<ProjectileState> ProjectilesQ { get; set; }
+    public float TimeRemaining { get; set; } = 60f;
     public bool IsGameOver { get; set; } = false;
 
 
@@ -15,7 +16,7 @@ public class GameState
         this.Player1 = player1;
         this.Player2 = player2;
     
-        projectilesQ = new List<ProjectileState>();
+        ProjectilesQ = new List<ProjectileState>();
     }
 
 }
