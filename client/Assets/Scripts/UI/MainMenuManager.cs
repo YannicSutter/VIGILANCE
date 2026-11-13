@@ -20,6 +20,8 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private Button declineQueueButton;
     [SerializeField] private Button acceptQueueButton;
 
+    // Error message on the main menu
+    [SerializeField] private Text errorText;
 
     private string gameSceneName = "Arena";
     private GameMode requestedMode;
@@ -34,6 +36,7 @@ public class MainMenuManager : MonoBehaviour
         acceptQueueButton.onClick.AddListener(OnAcceptQueue);
         exitButton.onClick.AddListener(OnExit);
 
+        HideError();
         ShowCanvas(mainMenu);
     }
 
@@ -41,25 +44,26 @@ public class MainMenuManager : MonoBehaviour
     {
         NetworkClient.Instance.Connected += OnConnected;
         NetworkClient.Instance.Disconnected += OnDisconnected;
-    }
-
-    private void OnConnected()
-    {
-         Debug.Log("Menu: connected");
-    }
-
-    private void OnDisconnected(DisconnectReason reason)
-    {
-        Debug.Log($"Menu: disconnected, reason {reason}");
+        NetworkClient.Instance.MatchFound += OnMatchFound;
+        NetworkClient.Instance.MatchCreated += OnMatchCreated;
     }
 
     private void OnDestroy()
     {
         singlePlayerButton.onClick.RemoveListener(OnSinglePlayer);
         multiPlayerButton.onClick.RemoveListener(OnMultiPlayer);
+        cancelQueueButton.onClick.RemoveListener(OnCancelQueue);
+        declineQueueButton.onClick.RemoveListener(OnDeclineQueue);
+        acceptQueueButton.onClick.RemoveListener(OnAcceptQueue);
         exitButton.onClick.RemoveListener(OnExit);
+
+        NetworkClient.Instance.Connected -= OnConnected;
+        NetworkClient.Instance.Disconnected -= OnDisconnected;
+        NetworkClient.Instance.MatchFound -= OnMatchFound;
+        NetworkClient.Instance.MatchCreated -= OnMatchCreated;
     }
 
+    // UI Helpers
     private void ShowCanvas(Canvas target)
     {
         mainMenu.gameObject.SetActive(mainMenu == target);
@@ -67,8 +71,21 @@ public class MainMenuManager : MonoBehaviour
         QueuePop.gameObject.SetActive(QueuePop == target);
     }
 
+    private void ShowError(string message)
+    {
+        errorText.text = message;
+        errorText.gameObject.SetActive(true);
+    }
+
+    private void HideError()
+    {
+        errorText.gameObject.SetActive(false);
+    }
+
+    // Button Handlers
     private void OnSinglePlayer()
     {
+        HideError();
         requestedMode = GameMode.SinglePlayer;
         NetworkClient.Instance.Connect(requestedMode);
 
@@ -77,6 +94,7 @@ public class MainMenuManager : MonoBehaviour
 
     private void OnMultiPlayer()
     {
+        HideError();
         requestedMode = GameMode.MultiPlayer;
         NetworkClient.Instance.Connect(requestedMode);
 
@@ -85,24 +103,21 @@ public class MainMenuManager : MonoBehaviour
 
     private void OnCancelQueue()
     {
-        //TODO: Cancel Network Connection
-
+        NetworkClient.Instance.Disconnect();
         ShowCanvas(mainMenu);
     }
 
     private void OnDeclineQueue()
     {
-        //TODO: Send QueueDecline to server
-
+        // Disconnecting is the decline: the server treats a disconnect during the pop as a decline
+        NetworkClient.Instance.Disconnect();
         ShowCanvas(mainMenu);
     }
 
     private void OnAcceptQueue()
     {
-        //TODO: Send QueueAccept to server
-
-        //TODO: Only switch scenes if the match is created by the server, else go back into the queue
-        SceneManager.LoadScene(gameSceneName);
+        NetworkClient.Instance.SendAccept();
+        acceptQueueButton.interactable = false;
     }
 
     private void OnExit()
@@ -112,5 +127,38 @@ public class MainMenuManager : MonoBehaviour
         #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
         #endif
+    }
+
+    // Network Events
+    private void OnConnected()
+    {
+        Debug.Log("Menu: connected, waiting for the server");
+    }
+
+    private void OnDisconnected(DisconnectReason reason)
+    {
+        Debug.Log($"Menu: disconnected, reason {reason}");
+        ShowCanvas(mainMenu);
+
+        if (reason == DisconnectReason.ConnectionFailed)
+        {
+            ShowError("Could not reach the server.");
+        }
+        else if (reason == DisconnectReason.ConnectionRejected)
+        {
+            ShowError("The server rejected the connection.");
+        }
+    }
+
+    private void OnMatchFound()
+    {
+        acceptQueueButton.interactable = true;
+        ShowCanvas(QueuePop);
+    }
+
+    private void OnMatchCreated()
+    {
+        Debug.Log("Menu: match created");
+        SceneManager.LoadScene(gameSceneName);
     }
 }

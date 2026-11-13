@@ -9,6 +9,7 @@ public class NetworkClient : MonoBehaviour
 
     public event Action Connected;
     public event Action<DisconnectReason> Disconnected;
+    public event Action MatchFound;
     public event Action MatchCreated;
 
     private NetManager client;
@@ -51,11 +52,22 @@ public class NetworkClient : MonoBehaviour
         listener.NetworkReceiveEvent += (peer, reader, channel, deliveryMethod) =>
         {
             MessageType type = (MessageType)reader.GetByte();
-            Debug.Log($"Received message: {type}");
+
+            if (type != MessageType.State)
+            {
+                Debug.Log($"Received message: {type}");
+            }
 
             if (type == MessageType.State)
             {
                 LatestState = reader.GetGameState();
+            }
+            else if (type == MessageType.MatchFound)
+            {
+                if (MatchFound != null)
+                {
+                    MatchFound.Invoke();
+                }
             }
             else if (type == MessageType.MatchCreated)
             {
@@ -122,6 +134,18 @@ public class NetworkClient : MonoBehaviour
         LatestState = null;
     }
 
+    public void SendAccept()
+    {
+        if (!IsConnected)
+        {
+            return;
+        }
+
+        NetDataWriter writer = new NetDataWriter();
+        writer.Put((byte)MessageType.AcceptMatch);
+        serverPeer.Send(writer, DeliveryMethod.ReliableOrdered);
+    }
+
     public void SendInput(InputFrame input)
     {
         if (!IsConnected)
@@ -130,6 +154,7 @@ public class NetworkClient : MonoBehaviour
         }
 
         NetDataWriter writer = new NetDataWriter();
+        writer.Put((byte)MessageType.Input);
         writer.Put(input);
 
         DeliveryMethod method;
